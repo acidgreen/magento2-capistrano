@@ -1,0 +1,11 @@
+### sample stage configuration
+### this can be copied to dev.rb, staging.rb, production.rb or custom stage as template
+
+set :deploy_to, ""              # deployment location, usually /home/{user}/public_html
+set :user, ""                   # ssh user
+
+role :web, ""                   # Your HTTP server, Apache/etc
+role :app, ""                   # This may be the same as your `Web` server
+role :db,  "", :primary => true # This is where Rails migrations will run
+
+set :keep_releases, 2           # Number of release to be kept in the remote server

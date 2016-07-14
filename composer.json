@@ -1,0 +1,28 @@
+{
+    "name": "acidgreen/capistrano-magento2-recipe",
+    "license": "proprietary",
+    "type": "magento2-component",
+    "description": "Capistrano deployer",
+    "authors":[
+        {
+            "name":"Jan Ramos",
+            "email":"jan.ramos@acidgreen.com.au"
+        }
+    ],
+    "extra": {
+        "map": [
+            [
+                "dev/tools/capistrano/.gitignore.dist",
+                "dev/tools/capistrano/.gitignore"
+            ],
+            [
+                "dev/tools/capistrano/config",
+                "dev/tools/capistrano/config"
+            ],
+            [
+                "dev/tools/capistrano/lib",
+                "dev/tools/capistrano/lib"
+            ]
+        ]
+    }
+}

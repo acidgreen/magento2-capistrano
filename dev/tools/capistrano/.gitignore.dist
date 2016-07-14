@@ -1,0 +1,5 @@
+.gitignore
+Capfile
+/config/*.sample
+/config/deploy/*.sample
+/lib/

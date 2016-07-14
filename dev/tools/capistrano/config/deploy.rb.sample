@@ -1,0 +1,15 @@
+#this is a sample capistrano deploy configuration that you can copy to deploy.rb, note that deploy.rb is required
+
+#set composer command location from the remote server, default to composer, this can also be set on specific stage
+set :composer_bin, "composer"
+
+# for git to work
+set :application, "{put_application_name}"
+set :repository,  "git@bitbucket.org:acidgreen/{project}.git"
+
+# shared files and symlinks
+# app_symlinks.push("/path/to/your/folder1","/path/to/your/folder2")
+# app_shared_dirs.push("/path/to/your/folder1","/path/to/your/folder2")
+# app_shared_files.push("/path/to/your/file.txt")
+
+### custom tasks can be added below
