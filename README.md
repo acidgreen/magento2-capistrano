@@ -1,4 +1,4 @@
-*# Capistrano deployment tool for Magento 2 #
+# Capistrano deployment tool for Magento 2 #
 
 ## Prerequisites ##
 You must have the following installed on your local:
@@ -42,7 +42,7 @@ Once you have configured and tested your capistrano deployer for your project, y
 
 ```
 #!sh
-$ git add dev/tools/capistrano
+$ git add dev/tools/capistrano/config
 ```
 note that there is a .gitignore file under dev/tools/capistrano so only the configuration resources you created should be added. Also as per mentioned in step 3, don't forget to add your updated .gitignore file to your project repository. 
 
