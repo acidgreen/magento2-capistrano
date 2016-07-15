@@ -22,7 +22,7 @@ set :app_shared_files, ["/app/etc/config.php","/app/etc/env.php"]
 set :stages, %w(dev staging production)
 set :default_stage, "dev"
 
-load 'config/deploy'
+load 'dev/tools/capistrano/config/deploy'
 require 'capistrano/ext/multistage'
 
 def remote_file_exists?(full_path)
