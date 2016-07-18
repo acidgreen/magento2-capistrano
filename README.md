@@ -8,7 +8,7 @@ You must have the following installed on your local:
 * gems (railsless-deploy and steps)
 
 Please refer to the following link on how to setup the above software on your machine:
-Please see https://acidgreen.atlassian.net/wiki/display/DG/1.+Installation for more information about the installation.
+Please see [https://acidgreen.atlassian.net/wiki/display/DG/1.+Installation] for more information about the installation.
 
 ## Installation ##
 
@@ -48,4 +48,4 @@ note that there is a .gitignore file under dev/tools/capistrano so only the conf
 
 
 ## Usage ##
-See https://acidgreen.atlassian.net/wiki/display/DG/4.+Tasks+available
+See [https://acidgreen.atlassian.net/wiki/display/DG/4.+Tasks+available]
