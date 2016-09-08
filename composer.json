@@ -12,6 +12,10 @@
     "extra": {
         "map": [
             [
+                "Capfile",
+                "Capfile"
+            ],
+            [
                 "dev/tools/capistrano/.gitignore.dist",
                 "dev/tools/capistrano/.gitignore"
             ],
