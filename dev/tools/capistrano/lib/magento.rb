@@ -2,6 +2,7 @@
 default_run_options[:pty] = true  # Must be set for the password prompt 
 
 set :composer_bin, "composer"
+set :php_bin, "php"
 
 # from git to work
 set :application, "{put_application_name}"
@@ -14,10 +15,11 @@ set :group_writable, true
 set :keep_releases, 2
 set :stage_dir, "dev/tools/capistrano/config/deploy"
 
-set :app_symlinks, ["/pub/media", "/var"]
-set :app_shared_dirs, ["/app/etc/", "/pub/media", "/var"]
-set :app_shared_files, ["/app/etc/config.php","/app/etc/env.php"]
+set :app_symlinks, ["/pub/media", "/var/backups", "/var/composer_home", "/var/importexport", "/var/import_history", "/var/log", "/var/session", "/var/tmp", "/var/report", "/var/support"]
+set :app_shared_dirs, ["/app/etc/", "/pub/media", "/var/backups", "/var/composer_home", "/var/importexport", "/var/import_history", "/var/log", "/var/session", "/var/tmp", "/var/report", "/var/support"]
+set :app_shared_files, ["/app/etc/config.php","/app/etc/env.php", "/var/varnish.vcl", "/var/default.vcl"]
 
+set :ensure_folders, ["/var"]
 
 set :stages, %w(dev staging production)
 set :default_stage, "dev"
@@ -115,6 +117,13 @@ namespace :magento do
         With :web roles
     DESC
     task :finalize_update, :roles => :web, :except => { :no_release => true } do
+        # Add latest revision id to .git-ftp.log for Bitbucket Pipelines deployment via git ftp
+        run "echo #{latest_revision} > #{latest_release}/.git-ftp.log"
+
+        if ensure_folders
+            # Create folders required by Magento 2
+            ensure_folders.each { |dir| run "#{try_sudo} mkdir -p #{latest_release}#{dir} && chmod 755 #{latest_release}#{dir};"}
+        end
         if app_symlinks
             # Remove the contents of the shared directories if they were deployed from SCM
             app_symlinks.each { |link| run "#{try_sudo} rm -rf #{latest_release}#{link}" }
@@ -128,14 +137,15 @@ namespace :magento do
             # Add symlinks the directoris in the shared location
             app_shared_files.each { |link| run "ln -s #{shared_path}#{link} #{latest_release}#{link}" }
         end
+        
     end 
 
     desc <<-DESC
         Ensure to set up all folders and file permissions correctly - With :web roles
     DESC
     task :security, :roles => :web do
-        run "cd #{latest_release} && find . -type d -exec chmod 770 {} \\;"
-        run "cd #{latest_release} && find . -type f -exec chmod 660 {} \\;"
+        run "cd #{latest_release} && find . -type d -exec chmod 775 {} \\;"
+        run "cd #{latest_release} && find . -type f -exec chmod 664 {} \\;"
     end
 
     task :set_cold_deploy, :roles => :web, :except => { :no_release => true } do
@@ -148,9 +158,9 @@ namespace :magento do
     task :install_dependencies, :roles => :web, :except => { :no_release => true } do
         if !cold_deploy
             run "cd #{latest_release} && #{composer_bin} install --no-dev;"
-            run "cd #{latest_release} && php bin/magento setup:upgrade;"
-            run "cd #{latest_release} && php bin/magento setup:di:compile$(awk 'BEGIN {FS=\" ?= +\"}{if($1==\"multi-tenant\"){if($2==\"true\"){print \"-multi-tenant\"}}}' .capistrano/config)"
-            run "cd #{latest_release} && php bin/magento setup:static-content:deploy $(awk 'BEGIN {FS=\" ?= +\"}{if($1==\"lang\"){print $2}}' .capistrano/config) | grep -v '\\.'"
+            run "cd #{latest_release} && #{php_bin} bin/magento setup:upgrade --keep-generated;"
+            run "cd #{latest_release} && #{php_bin} bin/magento setup:di:compile$(awk 'BEGIN {FS=\" ?= +\"}{if($1==\"multi-tenant\"){if($2==\"true\"){print \"-multi-tenant\"}}}' .capistrano/config)"
+            run "cd #{latest_release} && #{php_bin} bin/magento setup:static-content:deploy $(awk 'BEGIN {FS=\" ?= +\"}{if($1==\"lang\"){print $2}}' .capistrano/config) | grep -v '\\.'"
         end
     end
 
@@ -169,7 +179,7 @@ namespace :magento do
         whitelisted_ips.each do |ip|
            ip_whitelist_param = ip_whitelist_param + " --ip=" + ip
         end
-        run "php #{current_path}/bin/magento maintenance:enable #{ip_whitelist_param}"
+        run "#{php_bin} #{current_path}/bin/magento maintenance:enable #{ip_whitelist_param}"
     end
 
     desc <<-DESC
@@ -179,7 +189,7 @@ namespace :magento do
     DESC
     task :enable_web, :roles => :web do
         puts "Enabling the site to the public"
-        run "php #{current_path}/bin/magento maintenance:disable"
+        run "#{php_bin} #{current_path}/bin/magento maintenance:disable"
     end
 
     desc <<-DESC
@@ -242,7 +252,7 @@ namespace :magento do
     DESC
     task :flush_cache, :roles => :web do
         puts "Flush Magento Cache"
-        run "php -f #{current_path}/bin/magento cache:flush"
+        run "#{php_bin} -f #{current_path}/bin/magento cache:flush"
     end
     
 end
