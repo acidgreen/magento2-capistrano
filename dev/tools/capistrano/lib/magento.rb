@@ -23,7 +23,7 @@ set :app_shared_dirs, ["/app/etc/", "/pub/media", "/var/backups", "/var/composer
 set :app_shared_files, ["/app/etc/config.php","/app/etc/env.php", "/var/varnish.vcl", "/var/default.vcl"]
 
 set :ensure_folders, ["/var"]
-set :cleanup_files, ["/.htaccess"];
+set :cleanup_files, [];
 
 set :stages, %w(dev staging production)
 set :default_stage, "dev"
