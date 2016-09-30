@@ -3,6 +3,9 @@ default_run_options[:pty] = true  # Must be set for the password prompt
 
 set :composer_bin, "composer"
 set :php_bin, "php"
+# Instead of updating the composer_bin and php_bin variables above, another way is to configure env PATHs as per below example
+#default_environment["PATH"] = "/home/user/bin:/opt/remi/php56/root/usr/bin:/opt/remi/php56/root/usr/sbin${PATH:+:${PATH}}"
+#default_environment["LD_LIBRARY_PATH"] = "/home/user/bin:/opt/remi/php56/root/usr/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
 
 # from git to work
 set :application, "{put_application_name}"
@@ -20,6 +23,7 @@ set :app_shared_dirs, ["/app/etc/", "/pub/media", "/var/backups", "/var/composer
 set :app_shared_files, ["/app/etc/config.php","/app/etc/env.php", "/var/varnish.vcl", "/var/default.vcl"]
 
 set :ensure_folders, ["/var"]
+set :cleanup_files, ["/.htaccess"];
 
 set :stages, %w(dev staging production)
 set :default_stage, "dev"
@@ -144,6 +148,17 @@ namespace :magento do
         Ensure to set up all folders and file permissions correctly - With :web roles
     DESC
     task :security, :roles => :web do
+        if cleanup_files
+            # Cleanup files
+            cleanup_files.each { |file| run "#{try_sudo} rm -f #{latest_release}#{file};"}
+        end
+        # Re-setup file symlinks that has been overwritten by composer
+        if app_shared_files
+            # Remove the contents of the shared directories if they were deployed from SCM
+            app_shared_files.each { |link| run "#{try_sudo} rm -rf #{latest_release}/#{link}" }
+            # Add symlinks the directoris in the shared location
+            app_shared_files.each { |link| run "ln -s #{shared_path}#{link} #{latest_release}#{link}" }
+        end
         run "cd #{latest_release} && find . -type d -exec chmod 775 {} \\;"
         run "cd #{latest_release} && find . -type f -exec chmod 664 {} \\;"
     end
