@@ -18,15 +18,18 @@ set :group_writable, true
 set :keep_releases, 2
 set :stage_dir, "dev/tools/capistrano/config/deploy"
 
-set :app_symlinks, ["/pub/media", "/var/backups", "/var/composer_home", "/var/importexport", "/var/import_history", "/var/log", "/var/session", "/var/report", "/var/support"]
-set :app_shared_dirs, ["/app/etc/", "/pub/media", "/var/backups", "/var/composer_home", "/var/importexport", "/var/import_history", "/var/log", "/var/session", "/var/report", "/var/support"]
+set :app_symlinks, ["/pub/media", "/pub/static/_cache", "/var/backups", "/var/composer_home", "/var/importexport", "/var/import_history", "/var/log", "/var/session", "/var/report", "/var/support"]
+set :app_shared_dirs, ["/app/etc/", "/pub/media", "/pub/static/_cache", "/var/backups", "/var/composer_home", "/var/importexport", "/var/import_history", "/var/log", "/var/session", "/var/report", "/var/support"]
 set :app_shared_files, ["/app/etc/config.php","/app/etc/env.php", "/var/varnish.vcl", "/var/default.vcl"]
 
-set :ensure_folders, ["/var"]
+set :ensure_folders, ["/var","/pub/static"]
 set :cleanup_files, [];
 
 set :stages, %w(dev staging production)
 set :default_stage, "dev"
+
+# Post deployment commands
+set :post_deployment_commands, []
 
 load 'dev/tools/capistrano/config/deploy'
 require 'capistrano/ext/multistage'
@@ -269,6 +272,18 @@ namespace :magento do
         puts "Flush Magento Cache"
         run "#{php_bin} -f #{current_path}/bin/magento cache:flush"
     end
+
+    desc <<-DESC
+            Execute post deployment commands
+        DESC
+        task :run_post_deployment_commands do
+            if not post_deployment_commands.empty? then
+                puts "RUNNING POST DEPLOYMENT COMMANDS"
+                post_deployment_commands.each { |command|
+                    run "#{command}"
+                }
+            end
+        end unless exists?(:run_post_deployment_commands)
     
 end
 
@@ -279,4 +294,6 @@ after  'deploy',                        'magento:ensure_robots'
 after  'magento:finalize_update',       'magento:install_dependencies'
 after  'magento:finalize_update',       'magento:security'
 after  'magento:security',              'magento:checksiteavailability'
-after  'deploy:update', 'deploy:cleanup'
+after  'deploy:update',                 'deploy:cleanup'
+after  'deploy',                        'magento:run_post_deployment_commands' # Run post deployment commands
+after  'deploy:rollback',               'magento:run_post_deployment_commands' # Run post deployment commands
