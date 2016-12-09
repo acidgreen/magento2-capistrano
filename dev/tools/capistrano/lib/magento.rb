@@ -18,8 +18,8 @@ set :group_writable, true
 set :keep_releases, 2
 set :stage_dir, "dev/tools/capistrano/config/deploy"
 
-set :app_symlinks, ["/pub/media", "/pub/static/_cache", "/var/backups", "/var/composer_home", "/var/importexport", "/var/import_history", "/var/log", "/var/session", "/var/report", "/var/support"]
-set :app_shared_dirs, ["/app/etc/", "/pub/media", "/pub/static/_cache", "/var/backups", "/var/composer_home", "/var/importexport", "/var/import_history", "/var/log", "/var/session", "/var/report", "/var/support"]
+set :app_symlinks, ["/pub/media", "/pub/static/_cache", "/var/backups", "/var/composer_home", "/var/importexport", "/var/import_history", "/var/log", "/var/session", "/var/report", "/var/support", "/var/export"]
+set :app_shared_dirs, ["/app/etc/", "/pub/media", "/pub/static/_cache", "/var/backups", "/var/composer_home", "/var/importexport", "/var/import_history", "/var/log", "/var/session", "/var/report", "/var/support", "/var/export"]
 set :app_shared_files, ["/app/etc/config.php","/app/etc/env.php", "/var/varnish.vcl", "/var/default.vcl"]
 
 set :ensure_folders, ["/var","/pub/static"]
