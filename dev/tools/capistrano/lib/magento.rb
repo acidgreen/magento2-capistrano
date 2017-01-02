@@ -28,6 +28,10 @@ set :cleanup_files, [];
 set :stages, %w(dev staging production)
 set :default_stage, "dev"
 
+set :composer_install_options, "--no-dev"
+set :magento_deploy_maintenance, false
+_cset(:whitelisted_ips)     {%w(220.244.29.70 121.97.16.114 58.69.143.1 180.232.105.194 112.199.110.130 112.199.110.140 119.93.249.156 119.93.179.15 202.78.101.222 114.108.245.51)}
+
 # Post deployment commands
 set :post_deployment_commands, []
 
@@ -171,6 +175,7 @@ namespace :magento do
     end
 
     desc <<-DESC
+        @deprecated, use task :update
         Install Magento 2 dependencies and run compilation and asset deployment
     DESC
     task :install_dependencies, :roles => :web, :except => { :no_release => true } do
@@ -180,6 +185,57 @@ namespace :magento do
             run "cd #{latest_release} && #{php_bin} bin/magento setup:di:compile$(awk 'BEGIN {FS=\" ?= +\"}{if($1==\"multi-tenant\"){if($2==\"true\"){print \"-multi-tenant\"}}}' .capistrano/config)"
             run "cd #{latest_release} && #{php_bin} bin/magento setup:static-content:deploy $(awk 'BEGIN {FS=\" ?= +\"}{if($1==\"lang\"){print $2}}' .capistrano/config) | grep -v '\\.'"
         end
+    end
+
+    desc <<-DESC
+        @deprecated, use task :update
+        Install Magento 2 dependencies and run compilation and asset deployment
+    DESC
+    task :update, :roles => :web, :except => { :no_release => true } do
+        if !cold_deploy
+            magento.composer_install
+            magento.di_compile
+            magento.static_content_deploy
+            magento.security
+            magento.setup_upgrade
+        end
+    end
+
+    desc <<-DESC
+        Install Magento 2 dependencies and run compilation and asset deployment
+    DESC
+    task :composer_install, :roles => :web, :except => { :no_release => true } do
+        run "cd #{latest_release} && #{composer_bin} install #{composer_install_options};"
+    end
+
+    desc <<-DESC
+        Run Magento 2 setup:db-schema:upgrade and setup:db-data:upgrade, it is not recommended to run setup:upgrade
+    DESC
+    task :setup_upgrade, :roles => :db, :only => {:primary => true},  :except => { :no_release => true } do
+        db_status = capture("cd #{latest_release} && #{php_bin} bin/magento setup:db:status").strip
+        puts db_status
+        if not db_status.to_s.include? 'All modules are up to date'
+            puts "Performing Magento setup upgrade"
+            magento.disable_web if fetch(:magento_deploy_maintenance)
+            run "cd #{latest_release} && #{php_bin} bin/magento setup:db-schema:upgrade --quiet"
+            run "cd #{latest_release} && #{php_bin} bin/magento setup:db-data:upgrade --quiet"
+            magento.enable_web if fetch(:magento_deploy_maintenance)
+        end
+    end
+
+    desc <<-DESC
+        Run Magento 2 DI compilation
+    DESC
+    task :di_compile, :roles => :web, :except => { :no_release => true } do
+        run "cd #{latest_release} && #{php_bin} bin/magento setup:di:compile$(awk 'BEGIN {FS=\" ?= +\"}{if($1==\"multi-tenant\"){if($2==\"true\"){print \"-multi-tenant\"}}}' .capistrano/config)"
+    end
+
+    desc <<-DESC
+        Run Magento 2 static content deployment
+    DESC
+    task :static_content_deploy, :roles => :web, :except => { :no_release => true } do
+        run "cd #{latest_release} && touch pub/static/deployed_version.txt"
+        run "cd #{latest_release} && #{php_bin} bin/magento setup:static-content:deploy $(awk 'BEGIN {FS=\" ?= +\"}{if($1==\"lang\"){print $2}}' .capistrano/config) | grep -v '\\.'"
     end
 
     desc <<-DESC
@@ -291,9 +347,8 @@ after  'deploy:setup',                  'magento:setup'
 after  'deploy:finalize_update',        'magento:finalize_update'
 before 'deploy:cold',                   'magento:set_cold_deploy'
 after  'deploy',                        'magento:ensure_robots'
-after  'magento:finalize_update',       'magento:install_dependencies'
-after  'magento:finalize_update',       'magento:security'
-after  'magento:security',              'magento:checksiteavailability'
+after  'deploy:finalize_update',        'magento:update' 
+#after  'magento:security',              'magento:checksiteavailability'
 after  'deploy:update',                 'deploy:cleanup'
 after  'deploy',                        'magento:run_post_deployment_commands' # Run post deployment commands
 after  'deploy:rollback',               'magento:run_post_deployment_commands' # Run post deployment commands
