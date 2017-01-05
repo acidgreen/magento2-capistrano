@@ -212,15 +212,10 @@ namespace :magento do
         Run Magento 2 setup:db-schema:upgrade and setup:db-data:upgrade, it is not recommended to run setup:upgrade
     DESC
     task :setup_upgrade, :roles => :db, :only => {:primary => true},  :except => { :no_release => true } do
-        db_status = capture("cd #{latest_release} && #{php_bin} bin/magento setup:db:status").strip
-        puts db_status
-        if not db_status.to_s.include? 'All modules are up to date'
-            puts "Performing Magento setup upgrade"
-            magento.disable_web if fetch(:magento_deploy_maintenance)
-            run "cd #{latest_release} && #{php_bin} bin/magento setup:db-schema:upgrade --quiet"
-            run "cd #{latest_release} && #{php_bin} bin/magento setup:db-data:upgrade --quiet"
-            magento.enable_web if fetch(:magento_deploy_maintenance)
-        end
+        puts "Performing Magento setup upgrade"
+        magento.disable_web if fetch(:magento_deploy_maintenance)
+        run "cd #{latest_release} && #{php_bin} bin/magento setup:upgrade"
+        magento.enable_web if fetch(:magento_deploy_maintenance)
     end
 
     desc <<-DESC
