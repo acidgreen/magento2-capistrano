@@ -194,10 +194,12 @@ namespace :magento do
     task :update, :roles => :web, :except => { :no_release => true } do
         if !cold_deploy
             magento.composer_install
+            magento.disable_web if fetch(:magento_deploy_maintenance)
+            magento.setup_upgrade
             magento.di_compile
             magento.static_content_deploy
             magento.security
-            magento.setup_upgrade
+            magento.enable_web if fetch(:magento_deploy_maintenance)
         end
     end
 
@@ -213,9 +215,7 @@ namespace :magento do
     DESC
     task :setup_upgrade, :roles => :db, :only => {:primary => true},  :except => { :no_release => true } do
         puts "Performing Magento setup upgrade"
-        magento.disable_web if fetch(:magento_deploy_maintenance)
-        run "cd #{latest_release} && #{php_bin} bin/magento setup:upgrade"
-        magento.enable_web if fetch(:magento_deploy_maintenance)
+        run "cd #{latest_release} && #{php_bin} bin/magento setup:upgrade --keep-generated"
     end
 
     desc <<-DESC
