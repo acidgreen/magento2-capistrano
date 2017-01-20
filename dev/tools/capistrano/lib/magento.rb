@@ -20,7 +20,7 @@ set :stage_dir, "dev/tools/capistrano/config/deploy"
 
 set :app_symlinks, ["/pub/media", "/pub/static/_cache", "/var/backups", "/var/composer_home", "/var/importexport", "/var/import_history", "/var/log", "/var/session", "/var/report", "/var/support", "/var/export"]
 set :app_shared_dirs, ["/app/etc/", "/pub/media", "/pub/static/_cache", "/var/backups", "/var/composer_home", "/var/importexport", "/var/import_history", "/var/log", "/var/session", "/var/report", "/var/support", "/var/export"]
-set :app_shared_files, ["/app/etc/config.php","/app/etc/env.php", "/var/varnish.vcl", "/var/default.vcl"]
+set :app_shared_files, ["/app/etc/config.php","/app/etc/env.php", "/var/varnish.vcl", "/var/default.vcl", "/.htaccess", "/pub/.htaccess", "/pub/static/.htaccess"]
 
 set :ensure_folders, ["/var","/pub/static"]
 set :cleanup_files, [];
@@ -197,9 +197,10 @@ namespace :magento do
         if !cold_deploy
             magento.composer_install
             magento.disable_web if fetch(:magento_deploy_maintenance)
-            magento.setup_upgrade
+            #magento.setup_upgrade
             magento.di_compile
             magento.static_content_deploy
+            magento.setup_upgrade
             magento.security
             magento.enable_web if fetch(:magento_deploy_maintenance)
         end
@@ -209,6 +210,11 @@ namespace :magento do
         Install Magento 2 dependencies and run compilation and asset deployment
     DESC
     task :composer_install, :roles => :web, :except => { :no_release => true } do
+        do_install = capture("diff #{latest_release}/composer.json #{current_path}/composer.json")
+        if do_install.length < 1
+            puts "No changes in composer.json -- copying vendor directory"
+            run "cd #{current_path} && cp composer.lock #{latest_release}/ && cp *.php #{latest_release}/ && cp -r vendor #{latest_release}/ && cp -r bin #{latest_release}/ && cp app/*.php #{latest_release}/app/ && cp -r app/etc #{latest_release}/app/ && cp -r setup #{latest_release}/ && cp -r pub #{latest_release}/ && cp -r pub/*.php #{latest_release}/pub/"
+        end
         run "cd #{latest_release} && #{composer_bin} install #{composer_install_options};"
     end
 
