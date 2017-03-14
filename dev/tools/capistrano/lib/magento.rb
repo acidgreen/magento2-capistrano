@@ -181,7 +181,9 @@ namespace :magento do
     task :install_dependencies, :roles => :web, :except => { :no_release => true } do
         if !cold_deploy
             run "cd #{latest_release} && #{composer_bin} install --no-dev;"
+            run "cd #{latest_release} && rm pub/media && mkdir pub/media" #BSW-619
             run "cd #{latest_release} && #{php_bin} bin/magento setup:upgrade --keep-generated;"
+            run "cd #{latest_release} && rm -rf pub/media && ln -nfs #{shared_path}/pub/media pub/media" #BSW-619
             run "cd #{latest_release} && #{php_bin} bin/magento setup:di:compile$(awk 'BEGIN {FS=\" ?= +\"}{if($1==\"multi-tenant\"){if($2==\"true\"){print \"-multi-tenant\"}}}' .capistrano/config)"
             run "cd #{latest_release} && #{php_bin} bin/magento setup:static-content:deploy $(awk 'BEGIN {FS=\" ?= +\"}{if($1==\"lang\"){print $2}}' .capistrano/config) | grep -v '\\.'"
         end
