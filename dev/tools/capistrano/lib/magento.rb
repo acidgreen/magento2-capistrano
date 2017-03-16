@@ -166,8 +166,8 @@ namespace :magento do
             # Add symlinks the directoris in the shared location
             app_shared_files.each { |link| run "ln -s #{shared_path}#{link} #{latest_release}#{link}" }
         end
-        run "cd #{latest_release} && find . -type d -exec chmod 775 {} \\;"
-        run "cd #{latest_release} && find . -type f -exec chmod 664 {} \\;"
+        run "cd #{latest_release} && find . -type d ! -perm 775 -exec chmod 775 {} \\;"
+        run "cd #{latest_release} && find . -type f ! -perm 664 -exec chmod 664 {} \\;"
     end
 
     task :set_cold_deploy, :roles => :web, :except => { :no_release => true } do
