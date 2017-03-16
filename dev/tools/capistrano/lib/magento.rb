@@ -35,6 +35,9 @@ _cset(:whitelisted_ips)     {%w(220.244.29.70 121.97.16.114 58.69.143.1 180.232.
 # Post deployment commands
 set :post_deployment_commands, []
 
+# Excluded themes
+set :excluded_themes, []
+
 load 'dev/tools/capistrano/config/deploy'
 require 'capistrano/ext/multistage'
 
@@ -181,16 +184,13 @@ namespace :magento do
     task :install_dependencies, :roles => :web, :except => { :no_release => true } do
         if !cold_deploy
             run "cd #{latest_release} && #{composer_bin} install --no-dev;"
-            run "cd #{latest_release} && rm pub/media && mkdir pub/media" #BSW-619
-            run "cd #{latest_release} && #{php_bin} bin/magento setup:upgrade --keep-generated;"
-            run "cd #{latest_release} && rm -rf pub/media && ln -nfs #{shared_path}/pub/media pub/media" #BSW-619
+            run "cd #{latest_release} && #{php_bin} bin/magento setup:upgrade --keep-generated;"            
             run "cd #{latest_release} && #{php_bin} bin/magento setup:di:compile$(awk 'BEGIN {FS=\" ?= +\"}{if($1==\"multi-tenant\"){if($2==\"true\"){print \"-multi-tenant\"}}}' .capistrano/config)"
             run "cd #{latest_release} && #{php_bin} bin/magento setup:static-content:deploy $(awk 'BEGIN {FS=\" ?= +\"}{if($1==\"lang\"){print $2}}' .capistrano/config) | grep -v '\\.'"
         end
     end
 
     desc <<-DESC
-        @deprecated, use task :update
         Install Magento 2 dependencies and run compilation and asset deployment
     DESC
     task :update, :roles => :web, :except => { :no_release => true } do
@@ -217,7 +217,9 @@ namespace :magento do
     DESC
     task :setup_upgrade, :roles => :db, :only => {:primary => true},  :except => { :no_release => true } do
         puts "Performing Magento setup upgrade"
+        run "cd #{latest_release} && rm pub/media && mkdir pub/media"
         run "cd #{latest_release} && #{php_bin} bin/magento setup:upgrade --keep-generated"
+        run "cd #{latest_release} && rm -rf pub/media && ln -nfs #{shared_path}/pub/media pub/media"
     end
 
     desc <<-DESC
@@ -231,8 +233,14 @@ namespace :magento do
         Run Magento 2 static content deployment
     DESC
     task :static_content_deploy, :roles => :web, :except => { :no_release => true } do
+        set :exclude_str, ""
+        if not excluded_themes.empty? then
+            excluded_themes.each { |theme|
+                exclude_str << "--exclude-theme=#{theme} "
+            }
+        end
         run "cd #{latest_release} && touch pub/static/deployed_version.txt"
-        run "cd #{latest_release} && #{php_bin} bin/magento setup:static-content:deploy $(awk 'BEGIN {FS=\" ?= +\"}{if($1==\"lang\"){print $2}}' .capistrano/config) | grep -v '\\.'"
+        run "cd #{latest_release} && #{php_bin} bin/magento setup:static-content:deploy $(awk 'BEGIN {FS=\" ?= +\"}{if($1==\"lang\"){print $2}}' .capistrano/config) #{exclude_str} | grep -v '\\.'"
     end
 
     desc <<-DESC
