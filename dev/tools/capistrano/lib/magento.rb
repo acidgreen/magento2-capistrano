@@ -32,6 +32,9 @@ set :composer_install_options, "--no-dev"
 set :magento_deploy_maintenance, false
 _cset(:whitelisted_ips)     {%w(220.244.29.70 121.97.16.114 58.69.143.1 180.232.105.194 112.199.110.130 112.199.110.140 119.93.249.156 119.93.179.15 202.78.101.222 114.108.245.51)}
 
+# Pre upgrade commands
+set :pre_upgrade_commands, []
+
 # Post deployment commands
 set :post_deployment_commands, []
 
@@ -213,6 +216,18 @@ namespace :magento do
     end
 
     desc <<-DESC
+        Execute pre-upgrade commands
+    DESC
+    task :run_pre_upgrade_commands do
+        if not pre_upgrade_commands.empty? then
+            puts "RUNNING PRE-UPGRADE COMMANDS"
+            pre_upgrade_commands.each { |command|
+                run "#{command}"
+            }
+        end
+    end
+
+    desc <<-DESC
         Run Magento 2 setup:db-schema:upgrade and setup:db-data:upgrade, it is not recommended to run setup:upgrade
     DESC
     task :setup_upgrade, :roles => :db, :only => {:primary => true},  :except => { :no_release => true } do
@@ -252,7 +267,7 @@ namespace :magento do
     DESC
     task :disable_web, :roles => :web do
         puts "Hiding the site from the public"
-        
+
         #IP Whitelisting
         ip_whitelist_param = ''
         whitelisted_ips.each do |ip|
@@ -335,24 +350,25 @@ namespace :magento do
     end
 
     desc <<-DESC
-            Execute post deployment commands
-        DESC
-        task :run_post_deployment_commands do
-            if not post_deployment_commands.empty? then
-                puts "RUNNING POST DEPLOYMENT COMMANDS"
-                post_deployment_commands.each { |command|
-                    run "#{command}"
-                }
-            end
-        end unless exists?(:run_post_deployment_commands)
-    
+        Execute post deployment commands
+    DESC
+    task :run_post_deployment_commands do
+        if not post_deployment_commands.empty? then
+            puts "RUNNING POST DEPLOYMENT COMMANDS"
+            post_deployment_commands.each { |command|
+                run "#{command}"
+            }
+        end
+    end unless exists?(:run_post_deployment_commands)
+
 end
 
 after  'deploy:setup',                  'magento:setup'
 after  'deploy:finalize_update',        'magento:finalize_update'
 before 'deploy:cold',                   'magento:set_cold_deploy'
 after  'deploy',                        'magento:ensure_robots'
-after  'deploy:finalize_update',        'magento:update' 
+after  'deploy:finalize_update',        'magento:update'
+before 'magento:setup_upgrade',         'magento:run_pre_upgrade_commands'
 #after  'magento:security',              'magento:checksiteavailability'
 after  'deploy:update',                 'deploy:cleanup'
 after  'deploy',                        'magento:run_post_deployment_commands' # Run post deployment commands
