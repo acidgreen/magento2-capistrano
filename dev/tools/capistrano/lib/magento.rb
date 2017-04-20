@@ -81,7 +81,7 @@ set :branch do
     tag
 end unless exists?(:branch)
 
-namespace :magento do
+namespace :magento2 do
   
     set :cold_deploy, false
 
@@ -101,7 +101,7 @@ namespace :magento do
     end
 
     desc <<-DESC
-        Prepares one or more servers for deployment of Magento2. Before you can use any \
+        Prepares one or more servers for deployment of Magento. Before you can use any \
         of the Capistrano deployment tasks with your project, you will need to \
         make sure all of your servers have been prepared with `cap deploy:setup'. When \
         you add a new server to your cluster, you can easily run the setup task \
@@ -198,13 +198,13 @@ namespace :magento do
     DESC
     task :update, :roles => :web, :except => { :no_release => true } do
         if !cold_deploy
-            magento.composer_install
-            magento.disable_web if fetch(:magento_deploy_maintenance)
-            magento.setup_upgrade
-            magento.di_compile
-            magento.static_content_deploy
-            magento.security
-            magento.enable_web if fetch(:magento_deploy_maintenance)
+            magento2.composer_install
+            magento2.disable_web if fetch(:magento_deploy_maintenance)
+            magento2.setup_upgrade
+            magento2.di_compile
+            magento2.static_content_deploy
+            magento2.security
+            magento2.enable_web if fetch(:magento_deploy_maintenance)
         end
     end
 
@@ -295,7 +295,7 @@ namespace :magento do
         set :isFileMissing, false
         set :checkFileExistPath, "#{current_path}/var/.maintenance.flag"
         # Run the task which will set :isFileMissing to true of false
-        magento.file.exists
+        magento2.file.exists
 
         if !isFileMissing
             # Default value is NO
@@ -326,12 +326,12 @@ namespace :magento do
         set :checkFileExistPath, "#{latest_release}/robots.txt"
 
         # Run the task which will set :isFileMissing to true of false
-        magento.file.exists
+        magento2.file.exists
 
         if isFileMissing
             set :isFileMissing, false
             set :checkFileExistPath, "#{current_path}/robots.txt"
-            magento.file.exists
+            magento2.file.exists
             if !isFileMissing
                 # Copy generated robots.txt from previous release to new release
                 run "cp #{current_path}/robots.txt #{latest_release}/robots.txt"
@@ -363,13 +363,13 @@ namespace :magento do
 
 end
 
-after  'deploy:setup',                  'magento:setup'
-after  'deploy:finalize_update',        'magento:finalize_update'
-before 'deploy:cold',                   'magento:set_cold_deploy'
-after  'deploy',                        'magento:ensure_robots'
-after  'deploy:finalize_update',        'magento:update'
-before 'magento:setup_upgrade',         'magento:run_pre_upgrade_commands'
-#after  'magento:security',              'magento:checksiteavailability'
+after  'deploy:setup',                  'magento2:setup'
+after  'deploy:finalize_update',        'magento2:finalize_update'
+before 'deploy:cold',                   'magento2:set_cold_deploy'
+after  'deploy',                        'magento2:ensure_robots'
+after  'deploy:finalize_update',        'magento2:update'
+before 'magento2:setup_upgrade',         'magento2:run_pre_upgrade_commands'
+#after  'magento2:security',              'magento2:checksiteavailability'
 after  'deploy:update',                 'deploy:cleanup'
-after  'deploy',                        'magento:run_post_deployment_commands' # Run post deployment commands
-after  'deploy:rollback',               'magento:run_post_deployment_commands' # Run post deployment commands
+after  'deploy',                        'magento2:run_post_deployment_commands' # Run post deployment commands
+after  'deploy:rollback',               'magento2:run_post_deployment_commands' # Run post deployment commands
