@@ -13,32 +13,21 @@ Please see [https://acidgreen.atlassian.net/wiki/display/DG/1.+Installation] for
 ## Installation ##
 
 #### Step 1: 
-Add the following to your Magento 2 project's composer.json
+Run the following command on the root of your project
 
 ```
 
-    "repositories": {
-        {
-            "type": "vcs",
-            "url": "git@github.com:acidgreen/magento2-capistrano.git"
-        }
-    }
-    ...
-    "require-dev": {
-        "acidgreen/magento2-capistrano": "dev-master"
-    }
-    
+   composer require --dev acidgreen/magento2-capistrano
+
 ```
+Capistrano will be installed to dev/tools/capistrano and the main file Capfile will be added to the root of the project. Make sure you add Capfile to your projects .gitignore file to exclude it from your repository.
 
 #### Step 2: 
-Run composer update. Capistrano will be installed to dev/tools/capistrano and the main file Capfile will be added to the root of the project. Make sure you add Capfile to your projects .gitignore file to exclude it from your repository.
-
-#### Step 3: 
 Configure Capistrano deployer for your project. You can find the capistrano source in dev/tools/capistrano directory of your Magento 2 project. Configure the following:
 1. dev/tools/capistrano/config/deploy.rb - This contains general settings for your capistrano including the project's git/bitbucket repository. There is a sample deploy.rb.sample that you can copy and use as template.
 2. stage configurations under dev/tools/capistrano/config/deploy/, you'll need to setup dev.rb, staging.rb, and production.rb and you can copy dev.rb.sample as template.
 
-#### Step 4:
+#### Step 3:
 Once you have configured and tested your capistrano deployer for your project, you can start adding the configuration resources you have created to the project's repository, you can run the command below to add these resources:
 
 ```

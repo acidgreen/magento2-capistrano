@@ -29,6 +29,9 @@ set :stages, %w(dev staging production)
 set :default_stage, "dev"
 
 set :composer_install_options, "--no-dev"
+set :setup_di_compile_options, [];
+set :static_content_deploy_options, ["-f"];
+set :static_content_deploy_locale, ["en_US"];
 set :magento_deploy_maintenance, false
 set :whitelisted_ips, [];
 
@@ -181,19 +184,6 @@ namespace :magento do
     end
 
     desc <<-DESC
-        @deprecated, use task :update
-        Install Magento 2 dependencies and run compilation and asset deployment
-    DESC
-    task :install_dependencies, :roles => :web, :except => { :no_release => true } do
-        if !cold_deploy
-            run "cd #{latest_release} && #{composer_bin} install --no-dev;"
-            run "cd #{latest_release} && #{php_bin} bin/magento setup:upgrade --keep-generated;"            
-            run "cd #{latest_release} && #{php_bin} bin/magento setup:di:compile$(awk 'BEGIN {FS=\" ?= +\"}{if($1==\"multi-tenant\"){if($2==\"true\"){print \"-multi-tenant\"}}}' .capistrano/config)"
-            run "cd #{latest_release} && #{php_bin} bin/magento setup:static-content:deploy $(awk 'BEGIN {FS=\" ?= +\"}{if($1==\"lang\"){print $2}}' .capistrano/config) | grep -v '\\.'"
-        end
-    end
-
-    desc <<-DESC
         Install Magento 2 dependencies and run compilation and asset deployment
     DESC
     task :update, :roles => :web, :except => { :no_release => true } do
@@ -241,7 +231,7 @@ namespace :magento do
         Run Magento 2 DI compilation
     DESC
     task :di_compile, :roles => :web, :except => { :no_release => true } do
-        run "cd #{latest_release} && #{php_bin} bin/magento setup:di:compile$(awk 'BEGIN {FS=\" ?= +\"}{if($1==\"multi-tenant\"){if($2==\"true\"){print \"-multi-tenant\"}}}' .capistrano/config)"
+        run "cd #{latest_release} && #{php_bin} bin/magento setup:di:compile #{setup_di_compile_options.join(' ')}"
     end
 
     desc <<-DESC
@@ -255,7 +245,7 @@ namespace :magento do
             }
         end
         run "cd #{latest_release} && touch pub/static/deployed_version.txt"
-        run "cd #{latest_release} && #{php_bin} bin/magento setup:static-content:deploy $(awk 'BEGIN {FS=\" ?= +\"}{if($1==\"force-static-content-deploy\"){if($2==\"true\"){print \"-f\"}}} {FS=\" ?= +\"}{if($1==\"lang\"){print $2}}' .capistrano/config) #{exclude_str} | grep -v '\\.'"
+        run "cd #{latest_release} && #{php_bin} bin/magento setup:static-content:deploy #{static_content_deploy_options.join(' ')} #{static_content_deploy_locale.join(' ')} #{exclude_str} | grep -v '\\.'"
     end
 
     desc <<-DESC
