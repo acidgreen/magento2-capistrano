@@ -16,17 +16,18 @@ Please see [https://acidgreen.atlassian.net/wiki/display/DG/1.+Installation] for
 Add the following to your Magento 2 project's composer.json
 
 ```
-#!javascript
+
     "repositories": {
         {
             "type": "vcs",
-            "url": "git@bitbucket.org:acidgreen/capistrano-magento2-recipe.git"
+            "url": "git@github.com:acidgreen/magento2-capistrano.git"
         }
     }
     ...
     "require-dev": {
-        "acidgreen/capistrano-magento2-recipe": "dev-master"
+        "acidgreen/magento2-capistrano": "dev-master"
     }
+    
 ```
 
 #### Step 2: 

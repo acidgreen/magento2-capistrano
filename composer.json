@@ -1,8 +1,8 @@
 {
-    "name": "acidgreen/capistrano-magento2-recipe",
+    "name": "acidgreen/magento2-capistrano",
     "license": "proprietary",
     "type": "magento2-component",
-    "description": "Capistrano deployer",
+    "description": "Capistrano deployer for Magento 2",
     "authors":[
         {
             "name":"Jan Ramos",

@@ -30,7 +30,7 @@ set :default_stage, "dev"
 
 set :composer_install_options, "--no-dev"
 set :magento_deploy_maintenance, false
-_cset(:whitelisted_ips)     {%w(220.244.29.70 121.97.16.114 58.69.143.1 180.232.105.194 112.199.110.130 112.199.110.140 119.93.249.156 119.93.179.15 202.78.101.222 114.108.245.51)}
+set :whitelisted_ips, [];
 
 # Pre upgrade commands
 set :pre_upgrade_commands, []
@@ -255,7 +255,7 @@ namespace :magento do
             }
         end
         run "cd #{latest_release} && touch pub/static/deployed_version.txt"
-        run "cd #{latest_release} && #{php_bin} bin/magento setup:static-content:deploy $(awk 'BEGIN {FS=\" ?= +\"}{if($1==\"lang\"){print $2}}' .capistrano/config) #{exclude_str} | grep -v '\\.'"
+        run "cd #{latest_release} && #{php_bin} bin/magento setup:static-content:deploy $(awk 'BEGIN {FS=\" ?= +\"}{if($1==\"force-static-content-deploy\"){if($2==\"true\"){print \"-f\"}}} {FS=\" ?= +\"}{if($1==\"lang\"){print $2}}' .capistrano/config) #{exclude_str} | grep -v '\\.'"
     end
 
     desc <<-DESC
